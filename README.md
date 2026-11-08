@@ -5,3 +5,5 @@
 4. Instale pelo app Downloader ou por ADB:
    adb connect IP_DO_FIRESTICK:5555 && adb install app-debug.apk
 Uso: OK/Menu/Esquerda abre a lista; Voltar alterna entre lista e vídeo.
+
+v1.1: o app abre direto na CNN Brasil e mantém o canal sempre ativo (sem pausa, com reconexão automática). Voltar apenas abre/fecha a lista; use Home para sair.
