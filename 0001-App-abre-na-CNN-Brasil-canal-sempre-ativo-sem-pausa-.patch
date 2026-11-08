@@ -1,7 +1,7 @@
 From 020245ef7ad5c889ef54a12262041bb01a3f364f Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Sun, 8 Nov 2026 23:11:33 +0000
-Subject: [PATCH] App abre na CNN Brasil, canal sempre ativo (sem pausa,
+Subject: [PATCH 1/4] App abre na CNN Brasil, canal sempre ativo (sem pausa,
  reconexao automatica), Media3 1.4.1
 
 ---

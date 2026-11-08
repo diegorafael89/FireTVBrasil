@@ -1,0 +1,26 @@
+From 9907c6323e037055a114e0588d2eaaea15cdf5b4 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 8 Nov 2026 23:35:48 +0000
+Subject: [PATCH 4/4] Evita reiniciar a CNN ao carregar a lista
+
+---
+ app/src/main/java/br/tv/fire/MainActivity.kt | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/app/src/main/java/br/tv/fire/MainActivity.kt b/app/src/main/java/br/tv/fire/MainActivity.kt
+index b7bb098..1a46211 100644
+--- a/app/src/main/java/br/tv/fire/MainActivity.kt
++++ b/app/src/main/java/br/tv/fire/MainActivity.kt
+@@ -120,7 +120,8 @@ class MainActivity : Activity() {
+                 cnnCandidates = cnn
+                 (cnn.take(1) + globoNews + cnn.drop(1)).forEach { channels.add(it); names.add(it.name) }
+                 adapter.notifyDataSetChanged()
+-                play(cnn.first())
++                // Só troca se a fonte for diferente da que já está tocando (evita reiniciar)
++                if (current?.url != cnn.first().url) play(cnn.first()) else current = cnn.first()
+             }
+ 
+             val total = rest.size
+-- 
+2.43.0
+

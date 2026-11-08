@@ -1,0 +1,60 @@
+From 6d7b747bee81ab44cdd868875af09098463e982a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 8 Nov 2026 23:35:44 +0000
+Subject: [PATCH 3/4] CNN como 1o canal e GloboNews como 2o
+
+---
+ README.md                                    |  1 +
+ app/src/main/java/br/tv/fire/MainActivity.kt | 17 ++++++++++++-----
+ 2 files changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/README.md b/README.md
+index 34ed204..fe270eb 100644
+--- a/README.md
++++ b/README.md
+@@ -8,3 +8,4 @@ Uso: OK/Menu/Esquerda abre a lista; Voltar alterna entre lista e vídeo.
+ 
+ v1.1: o app abre direto na CNN Brasil e mantém o canal sempre ativo (sem pausa, com reconexão automática). Voltar apenas abre/fecha a lista; use Home para sair.
+ Com a lista fechada: seta para cima = próximo canal, seta para baixo = canal anterior.
++Ordem fixa da lista: 1º CNN Brasil, 2º GloboNews, depois os demais canais ativos.
+diff --git a/app/src/main/java/br/tv/fire/MainActivity.kt b/app/src/main/java/br/tv/fire/MainActivity.kt
+index 7d088be..b7bb098 100644
+--- a/app/src/main/java/br/tv/fire/MainActivity.kt
++++ b/app/src/main/java/br/tv/fire/MainActivity.kt
+@@ -95,6 +95,9 @@ class MainActivity : Activity() {
+ 
+     private fun isCnn(ch: Channel) = ch.name.contains("cnn", ignoreCase = true)
+ 
++    private fun isGloboNews(ch: Channel) =
++        ch.name.replace(" ", "").contains("globonews", ignoreCase = true)
++
+     private fun loadChannels() {
+         Thread {
+             val all = try {
+@@ -106,14 +109,18 @@ class MainActivity : Activity() {
+                 return@Thread
+             }
+ 
+-            // CNN entra na lista sem validação (o player já tem reconexão automática)
+-            val cnn = all.filter { isCnn(it) }.sortedByDescending { it.name.contains("brasil", true) }
+-            val rest = all.filterNot { isCnn(it) }
++            // Canais fixos no topo da lista: 1º CNN, 2º GloboNews (entram sem validação;
++            // o player já tem reconexão automática)
++            val cnn = all.filter { isCnn(it) }
++                .sortedByDescending { it.name.contains("brasil", true) }
++                .ifEmpty { listOf(cnnFallback) }
++            val globoNews = all.filter { isGloboNews(it) }.take(1)
++            val rest = all.filterNot { isCnn(it) || isGloboNews(it) }
+             runOnUiThread {
+                 cnnCandidates = cnn
+-                cnn.forEach { channels.add(it); names.add(it.name) }
++                (cnn.take(1) + globoNews + cnn.drop(1)).forEach { channels.add(it); names.add(it.name) }
+                 adapter.notifyDataSetChanged()
+-                cnn.firstOrNull()?.let { play(it) }
++                play(cnn.first())
+             }
+ 
+             val total = rest.size
+-- 
+2.43.0
+

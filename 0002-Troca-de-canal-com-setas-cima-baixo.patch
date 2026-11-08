@@ -1,0 +1,102 @@
+From 4b3666d9d8074b1201c41f9ebec5c2924d59e7f9 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 8 Nov 2026 23:34:41 +0000
+Subject: [PATCH 2/4] Troca de canal com setas cima/baixo
+
+---
+ README.md                                    |  1 +
+ app/src/main/java/br/tv/fire/MainActivity.kt | 29 ++++++++++++++++++++
+ app/src/main/res/layout/activity_main.xml    |  7 +++++
+ 3 files changed, 37 insertions(+)
+
+diff --git a/README.md b/README.md
+index d14f840..34ed204 100644
+--- a/README.md
++++ b/README.md
+@@ -7,3 +7,4 @@
+ Uso: OK/Menu/Esquerda abre a lista; Voltar alterna entre lista e vídeo.
+ 
+ v1.1: o app abre direto na CNN Brasil e mantém o canal sempre ativo (sem pausa, com reconexão automática). Voltar apenas abre/fecha a lista; use Home para sair.
++Com a lista fechada: seta para cima = próximo canal, seta para baixo = canal anterior.
+diff --git a/app/src/main/java/br/tv/fire/MainActivity.kt b/app/src/main/java/br/tv/fire/MainActivity.kt
+index 24c3083..7d088be 100644
+--- a/app/src/main/java/br/tv/fire/MainActivity.kt
++++ b/app/src/main/java/br/tv/fire/MainActivity.kt
+@@ -37,6 +37,7 @@ class MainActivity : Activity() {
+     private lateinit var panel: View
+     private lateinit var list: ListView
+     private lateinit var status: TextView
++    private lateinit var banner: TextView
+     private lateinit var playerView: PlayerView
+     private lateinit var adapter: ArrayAdapter<String>
+     private var player: ExoPlayer? = null
+@@ -58,6 +59,7 @@ class MainActivity : Activity() {
+         panel = findViewById(R.id.panel)
+         list = findViewById(R.id.list)
+         status = findViewById(R.id.status)
++        banner = findViewById(R.id.banner)
+         playerView = findViewById(R.id.player)
+         playerView.keepScreenOn = true
+ 
+@@ -226,6 +228,22 @@ class MainActivity : Activity() {
+         }
+     }
+ 
++    // ---------- Troca de canal com as setas ----------
++
++    private val hideBanner = Runnable { banner.visibility = View.GONE }
++
++    private fun zap(step: Int) {
++        if (channels.isEmpty()) return
++        val idx = channels.indexOfFirst { it.url == current?.url }
++        val next = if (idx < 0) 0 else Math.floorMod(idx + step, channels.size)
++        val ch = channels[next]
++        play(ch)
++        banner.text = "${next + 1}/${channels.size}  ${ch.name}"
++        banner.visibility = View.VISIBLE
++        handler.removeCallbacks(hideBanner)
++        handler.postDelayed(hideBanner, 3000)
++    }
++
+     private fun showPanel() { panel.visibility = View.VISIBLE; list.requestFocus() }
+ 
+     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+@@ -237,6 +255,17 @@ class MainActivity : Activity() {
+                 return true
+             }
+         }
++        // Com a lista fechada: cima = próximo canal, baixo = canal anterior
++        if (panel.visibility != View.VISIBLE) {
++            when (keyCode) {
++                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_CHANNEL_UP -> {
++                    if (event?.repeatCount == 0) zap(+1); return true
++                }
++                KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_CHANNEL_DOWN -> {
++                    if (event?.repeatCount == 0) zap(-1); return true
++                }
++            }
++        }
+         if (panel.visibility != View.VISIBLE &&
+             (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER ||
+              keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_DPAD_LEFT)) {
+diff --git a/app/src/main/res/layout/activity_main.xml b/app/src/main/res/layout/activity_main.xml
+index b0cd754..4698c8c 100644
+--- a/app/src/main/res/layout/activity_main.xml
++++ b/app/src/main/res/layout/activity_main.xml
+@@ -7,6 +7,13 @@
+         android:id="@+id/player"
+         android:layout_width="match_parent" android:layout_height="match_parent"
+         app:use_controller="false" />
++    <TextView
++        android:id="@+id/banner"
++        android:layout_width="wrap_content" android:layout_height="wrap_content"
++        android:layout_gravity="top|end" android:layout_margin="32dp"
++        android:background="#CC101820" android:padding="16dp"
++        android:textColor="#FFFFFF" android:textSize="24sp"
++        android:visibility="gone" />
+     <LinearLayout
+         android:id="@+id/panel"
+         android:layout_width="440dp" android:layout_height="match_parent"
+-- 
+2.43.0
+
