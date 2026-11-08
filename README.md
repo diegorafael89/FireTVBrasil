@@ -7,3 +7,5 @@
 Uso: OK/Menu/Esquerda abre a lista; Voltar alterna entre lista e vídeo.
 
 v1.1: o app abre direto na CNN Brasil e mantém o canal sempre ativo (sem pausa, com reconexão automática). Voltar apenas abre/fecha a lista; use Home para sair.
+Com a lista fechada: seta para cima = próximo canal, seta para baixo = canal anterior.
+Ordem fixa da lista: 1º CNN Brasil, 2º GloboNews, depois os demais canais ativos.

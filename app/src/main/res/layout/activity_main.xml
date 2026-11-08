@@ -7,6 +7,13 @@
         android:id="@+id/player"
         android:layout_width="match_parent" android:layout_height="match_parent"
         app:use_controller="false" />
+    <TextView
+        android:id="@+id/banner"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="top|end" android:layout_margin="32dp"
+        android:background="#CC101820" android:padding="16dp"
+        android:textColor="#FFFFFF" android:textSize="24sp"
+        android:visibility="gone" />
     <LinearLayout
         android:id="@+id/panel"
         android:layout_width="440dp" android:layout_height="match_parent"

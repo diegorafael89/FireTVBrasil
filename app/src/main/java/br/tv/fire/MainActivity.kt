@@ -37,6 +37,7 @@ class MainActivity : Activity() {
     private lateinit var panel: View
     private lateinit var list: ListView
     private lateinit var status: TextView
+    private lateinit var banner: TextView
     private lateinit var playerView: PlayerView
     private lateinit var adapter: ArrayAdapter<String>
     private var player: ExoPlayer? = null
@@ -58,6 +59,7 @@ class MainActivity : Activity() {
         panel = findViewById(R.id.panel)
         list = findViewById(R.id.list)
         status = findViewById(R.id.status)
+        banner = findViewById(R.id.banner)
         playerView = findViewById(R.id.player)
         playerView.keepScreenOn = true
 
@@ -93,6 +95,9 @@ class MainActivity : Activity() {
 
     private fun isCnn(ch: Channel) = ch.name.contains("cnn", ignoreCase = true)
 
+    private fun isGloboNews(ch: Channel) =
+        ch.name.replace(" ", "").contains("globonews", ignoreCase = true)
+
     private fun loadChannels() {
         Thread {
             val all = try {
@@ -104,14 +109,19 @@ class MainActivity : Activity() {
                 return@Thread
             }
 
-            // CNN entra na lista sem validação (o player já tem reconexão automática)
-            val cnn = all.filter { isCnn(it) }.sortedByDescending { it.name.contains("brasil", true) }
-            val rest = all.filterNot { isCnn(it) }
+            // Canais fixos no topo da lista: 1º CNN, 2º GloboNews (entram sem validação;
+            // o player já tem reconexão automática)
+            val cnn = all.filter { isCnn(it) }
+                .sortedByDescending { it.name.contains("brasil", true) }
+                .ifEmpty { listOf(cnnFallback) }
+            val globoNews = all.filter { isGloboNews(it) }.take(1)
+            val rest = all.filterNot { isCnn(it) || isGloboNews(it) }
             runOnUiThread {
                 cnnCandidates = cnn
-                cnn.forEach { channels.add(it); names.add(it.name) }
+                (cnn.take(1) + globoNews + cnn.drop(1)).forEach { channels.add(it); names.add(it.name) }
                 adapter.notifyDataSetChanged()
-                cnn.firstOrNull()?.let { play(it) }
+                // Só troca se a fonte for diferente da que já está tocando (evita reiniciar)
+                if (current?.url != cnn.first().url) play(cnn.first()) else current = cnn.first()
             }
 
             val total = rest.size
@@ -226,6 +236,22 @@ class MainActivity : Activity() {
         }
     }
 
+    // ---------- Troca de canal com as setas ----------
+
+    private val hideBanner = Runnable { banner.visibility = View.GONE }
+
+    private fun zap(step: Int) {
+        if (channels.isEmpty()) return
+        val idx = channels.indexOfFirst { it.url == current?.url }
+        val next = if (idx < 0) 0 else Math.floorMod(idx + step, channels.size)
+        val ch = channels[next]
+        play(ch)
+        banner.text = "${next + 1}/${channels.size}  ${ch.name}"
+        banner.visibility = View.VISIBLE
+        handler.removeCallbacks(hideBanner)
+        handler.postDelayed(hideBanner, 3000)
+    }
+
     private fun showPanel() { panel.visibility = View.VISIBLE; list.requestFocus() }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -235,6 +261,17 @@ class MainActivity : Activity() {
             KeyEvent.KEYCODE_MEDIA_STOP, KeyEvent.KEYCODE_MEDIA_PLAY -> {
                 player?.playWhenReady = true
                 return true
+            }
+        }
+        // Com a lista fechada: cima = próximo canal, baixo = canal anterior
+        if (panel.visibility != View.VISIBLE) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_CHANNEL_UP -> {
+                    if (event?.repeatCount == 0) zap(+1); return true
+                }
+                KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_CHANNEL_DOWN -> {
+                    if (event?.repeatCount == 0) zap(-1); return true
+                }
             }
         }
         if (panel.visibility != View.VISIBLE &&
