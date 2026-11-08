@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#000000">
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        app:use_controller="false" />
+    <LinearLayout
+        android:id="@+id/panel"
+        android:layout_width="440dp" android:layout_height="match_parent"
+        android:orientation="vertical" android:background="#E6101820">
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:padding="16dp" android:textColor="#FFD54F" android:textSize="16sp"
+            android:text="Carregando canais..." />
+        <ListView
+            android:id="@+id/list"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:listSelector="#552E7DFF" android:divider="#22FFFFFF" android:dividerHeight="1dp" />
+    </LinearLayout>
+</FrameLayout>
